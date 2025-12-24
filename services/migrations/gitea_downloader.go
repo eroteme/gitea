@@ -293,7 +293,7 @@ func (g *GiteaDownloader) convertGiteaRelease(rel *gitea_sdk.Release) *base.Rele
 				}
 
 				if !hasBaseURL(assetDownloadURL, g.baseURL) {
-					WarnAndNotice("Unexpected AssetURL for assetID[%d] in %s: %s", assetID, g, assetDownloadURL)
+					WarnAndNotice("Convert Gitea Release", "Unexpected AssetURL for assetID[%d] in %s: %s", assetID, g, assetDownloadURL)
 					return io.NopCloser(strings.NewReader(asset.DownloadURL)), nil
 				}
 
@@ -415,7 +415,7 @@ func (g *GiteaDownloader) GetIssues(_ context.Context, page, perPage int) ([]*ba
 
 		reactions, err := g.getIssueReactions(issue.Index)
 		if err != nil {
-			WarnAndNotice("Unable to load reactions during migrating issue #%d in %s. Error: %v", issue.Index, g, err)
+			WarnAndNotice("Get Issues", "Unable to load reactions during migrating issue #%d in %s. Error: %v", issue.Index, g, err)
 		}
 
 		var assignees []string
@@ -473,7 +473,7 @@ func (g *GiteaDownloader) GetComments(ctx context.Context, commentable base.Comm
 		for _, comment := range comments {
 			reactions, err := g.getCommentReactions(comment.ID)
 			if err != nil {
-				WarnAndNotice("Unable to load comment reactions during migrating issue #%d for comment %d in %s. Error: %v", commentable.GetForeignIndex(), comment.ID, g, err)
+				WarnAndNotice("Get Comments", "Unable to load comment reactions during migrating issue #%d for comment %d in %s. Error: %v", commentable.GetForeignIndex(), comment.ID, g, err)
 			}
 
 			allComments = append(allComments, &base.Comment{
@@ -548,7 +548,7 @@ func (g *GiteaDownloader) GetPullRequests(_ context.Context, page, perPage int) 
 
 		reactions, err := g.getIssueReactions(pr.Index)
 		if err != nil {
-			WarnAndNotice("Unable to load reactions during migrating pull #%d in %s. Error: %v", pr.Index, g, err)
+			WarnAndNotice("Get Pull Requests", "Unable to load reactions during migrating pull #%d in %s. Error: %v", pr.Index, g, err)
 		}
 
 		var assignees []string

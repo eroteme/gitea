@@ -356,7 +356,7 @@ func (g *GithubDownloaderV3) convertGithubRelease(ctx context.Context, rel *gith
 				if !hasBaseURL(redirectURL, g.baseURL) &&
 					!hasBaseURL(redirectURL, "https://objects.githubusercontent.com/") &&
 					!hasBaseURL(redirectURL, "https://release-assets.githubusercontent.com/") {
-					WarnAndNotice("Unexpected AssetURL for assetID[%d] in %s: %s", asset.GetID(), g, redirectURL)
+					WarnAndNotice("Convert Github Release", "Unexpected AssetURL for assetID[%d] in %s: %s", asset.GetID(), g, redirectURL)
 
 					return io.NopCloser(strings.NewReader(redirectURL)), nil
 				}

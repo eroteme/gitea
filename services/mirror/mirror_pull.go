@@ -221,7 +221,7 @@ func pruneBrokenReferences(ctx context.Context,
 
 		log.Error("Failed to prune mirror repository %s%-v references:\nStdout: %s\nStderr: %s\nErr: %v", wiki, m.Repo, stdoutMessage, stderrMessage, pruneErr)
 		desc := fmt.Sprintf("Failed to prune mirror repository %s'%s' references: %s", wiki, storageRepo.RelativePath(), stderrMessage)
-		if err := system_model.CreateRepositoryNotice(desc); err != nil {
+		if err := system_model.CreateRepositoryNotice(m.Repo.FullName(), desc); err != nil {
 			log.Error("CreateRepositoryNotice: %v", err)
 		}
 		// this if will only be reached on a successful prune so try to get the mirror again
@@ -310,7 +310,7 @@ func runSync(ctx context.Context, m *repo_model.Mirror) ([]*mirrorSyncResult, bo
 		if err != nil {
 			log.Error("SyncMirrors [repo: %-v]: failed to update mirror repository:\nStdout: %s\nStderr: %s\nErr: %v", m.Repo, stdoutMessage, stderrMessage, err)
 			desc := fmt.Sprintf("Failed to update mirror repository '%s': %s", m.Repo.RelativePath(), stderrMessage)
-			if err = system_model.CreateRepositoryNotice(desc); err != nil {
+			if err = system_model.CreateRepositoryNotice(m.Repo.FullName(), desc); err != nil {
 				log.Error("CreateRepositoryNotice: %v", err)
 			}
 			return nil, false
@@ -393,7 +393,7 @@ func runSync(ctx context.Context, m *repo_model.Mirror) ([]*mirrorSyncResult, bo
 			if err != nil {
 				log.Error("SyncMirrors [repo: %-v Wiki]: failed to update mirror repository wiki:\nStdout: %s\nStderr: %s\nErr: %v", m.Repo, stdoutMessage, stderrMessage, err)
 				desc := fmt.Sprintf("Failed to update mirror repository wiki '%s': %s", m.Repo.WikiStorageRepo().RelativePath(), stderrMessage)
-				if err = system_model.CreateRepositoryNotice(desc); err != nil {
+				if err = system_model.CreateRepositoryNotice(m.Repo.FullName(), desc); err != nil {
 					log.Error("CreateRepositoryNotice: %v", err)
 				}
 				return nil, false
@@ -633,7 +633,7 @@ func checkAndUpdateEmptyRepository(ctx context.Context, m *repo_model.Mirror, re
 		if err := repo_model.UpdateRepositoryColsWithAutoTime(ctx, m.Repo, "default_branch", "is_empty"); err != nil {
 			log.Error("Failed to update default branch of repository %-v. Error: %v", m.Repo, err)
 			desc := fmt.Sprintf("Failed to update default branch of repository '%s': %v", m.Repo.RelativePath(), err)
-			if err = system_model.CreateRepositoryNotice(desc); err != nil {
+			if err = system_model.CreateRepositoryNotice(m.Repo.FullName(), desc); err != nil {
 				log.Error("CreateRepositoryNotice: %v", err)
 			}
 			return false

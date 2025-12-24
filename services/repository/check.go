@@ -50,7 +50,7 @@ func GitFsckRepo(ctx context.Context, repo *repo_model.Repository, timeout time.
 	log.Trace("Running health check on repository %-v", repo.FullName())
 	if err := gitrepo.Fsck(ctx, repo, timeout, args); err != nil {
 		log.Warn("Failed to health check repository (%-v): %v", repo.FullName(), err)
-		if err = system_model.CreateRepositoryNotice("Failed to health check repository (%s): %v", repo.FullName(), err); err != nil {
+		if err = system_model.CreateRepositoryNotice(repo.FullName(), "Failed to health check repository: %v", err); err != nil {
 			log.Error("CreateRepositoryNotice: %v", err)
 		}
 	}
@@ -92,7 +92,7 @@ func GitGcRepo(ctx context.Context, repo *repo_model.Repository, timeout time.Du
 	if err != nil {
 		log.Error("Repository garbage collection failed for %-v. Stdout: %s\nError: %v", repo, stdout, err)
 		desc := fmt.Sprintf("Repository garbage collection failed for %s. Stdout: %s\nError: %v", repo.RelativePath(), stdout, err)
-		if err := system_model.CreateRepositoryNotice(desc); err != nil {
+		if err := system_model.CreateRepositoryNotice(repo.FullName(), desc); err != nil {
 			log.Error("CreateRepositoryNotice: %v", err)
 		}
 		return fmt.Errorf("Repository garbage collection failed in repo: %s: Error: %w", repo.RelativePath(), err)
@@ -102,7 +102,7 @@ func GitGcRepo(ctx context.Context, repo *repo_model.Repository, timeout time.Du
 	if err := repo_module.UpdateRepoSize(ctx, repo); err != nil {
 		log.Error("Updating size as part of garbage collection failed for %-v. Stdout: %s\nError: %v", repo, stdout, err)
 		desc := fmt.Sprintf("Updating size as part of garbage collection failed for %s. Stdout: %s\nError: %v", repo.RelativePath(), stdout, err)
-		if err := system_model.CreateRepositoryNotice(desc); err != nil {
+		if err := system_model.CreateRepositoryNotice(repo.FullName(), desc); err != nil {
 			log.Error("CreateRepositoryNotice: %v", err)
 		}
 		return fmt.Errorf("Updating size as part of garbage collection failed in repo: %s: Error: %w", repo.RelativePath(), err)
@@ -113,6 +113,8 @@ func GitGcRepo(ctx context.Context, repo *repo_model.Repository, timeout time.Du
 
 func gatherMissingRepoRecords(ctx context.Context) (repo_model.RepositoryList, error) {
 	repos := make([]*repo_model.Repository, 0, 10)
+	// This is nasty but need to refactor the db model to get the error surfaced anothrr way
+	var errRepo *repo_model.Repository
 	if err := db.Iterate(
 		ctx,
 		builder.Gt{"id": 0},
@@ -124,6 +126,7 @@ func gatherMissingRepoRecords(ctx context.Context) (repo_model.RepositoryList, e
 			}
 			exist, err := gitrepo.IsRepositoryExist(ctx, repo)
 			if err != nil {
+				errRepo = repo
 				return fmt.Errorf("Unable to check dir for %s. %w", repo.FullName(), err)
 			}
 			if !exist {
@@ -135,7 +138,7 @@ func gatherMissingRepoRecords(ctx context.Context) (repo_model.RepositoryList, e
 		if strings.HasPrefix(err.Error(), "Aborted gathering missing repo") {
 			return nil, err
 		}
-		if err2 := system_model.CreateRepositoryNotice("gatherMissingRepoRecords: %v", err); err2 != nil {
+		if err2 := system_model.CreateRepositoryNotice(errRepo.FullName(), "gatherMissingRepoRecords: %v", err); err2 != nil {
 			log.Error("CreateRepositoryNotice: %v", err2)
 		}
 		return nil, err
@@ -163,7 +166,7 @@ func DeleteMissingRepositories(ctx context.Context, doer *user_model.User) error
 		log.Trace("Deleting %d/%d...", repo.OwnerID, repo.ID)
 		if err := DeleteRepositoryDirectly(ctx, repo.ID); err != nil {
 			log.Error("Failed to DeleteRepository %-v: Error: %v", repo, err)
-			if err2 := system_model.CreateRepositoryNotice("Failed to DeleteRepository %s [%d]: Error: %v", repo.FullName(), repo.ID, err); err2 != nil {
+			if err2 := system_model.CreateRepositoryNotice(repo.FullName(), "Failed to DeleteRepository [%d]: Error: %v", repo.ID, err); err2 != nil {
 				log.Error("CreateRepositoryNotice: %v", err)
 			}
 		}
@@ -191,7 +194,7 @@ func ReinitMissingRepositories(ctx context.Context) error {
 		log.Trace("Initializing %d/%d...", repo.OwnerID, repo.ID)
 		if err := gitrepo.InitRepository(ctx, repo, repo.ObjectFormatName); err != nil {
 			log.Error("Unable (re)initialize repository %d at %s. Error: %v", repo.ID, repo.RelativePath(), err)
-			if err2 := system_model.CreateRepositoryNotice("InitRepository [%d]: %v", repo.ID, err); err2 != nil {
+			if err2 := system_model.CreateRepositoryNotice(repo.FullName(), "InitRepository [%d]: %v", repo.ID, err); err2 != nil {
 				log.Error("CreateRepositoryNotice: %v", err2)
 			}
 		}

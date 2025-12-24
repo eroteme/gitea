@@ -266,7 +266,7 @@ func CreateRepositoryDirectly(ctx context.Context, doer, owner *user_model.User,
 	defer func() {
 		if err != nil {
 			// we can not use the ctx because it maybe canceled or timeout
-			cleanupRepository(repo.ID)
+			cleanupRepository(repo)
 		}
 	}()
 
@@ -461,11 +461,11 @@ func createRepositoryInDB(ctx context.Context, doer, u *user_model.User, repo *r
 	return nil
 }
 
-func cleanupRepository(repoID int64) {
-	if errDelete := DeleteRepositoryDirectly(graceful.GetManager().ShutdownContext(), repoID); errDelete != nil {
+func cleanupRepository(repo *repo_model.Repository) {
+	if errDelete := DeleteRepositoryDirectly(graceful.GetManager().ShutdownContext(), repo.ID); errDelete != nil {
 		log.Error("cleanupRepository failed: %v", errDelete)
 		// add system notice
-		if err := system_model.CreateRepositoryNotice("DeleteRepositoryDirectly failed when cleanup repository: %v", errDelete); err != nil {
+		if err := system_model.CreateRepositoryNotice(repo.FullName(), "DeleteRepositoryDirectly failed when cleanup repository: %v", errDelete); err != nil {
 			log.Error("CreateRepositoryNotice: %v", err)
 		}
 	}

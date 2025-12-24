@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"code.gitea.io/gitea/models/db"
+
 	"code.gitea.io/gitea/modules/graceful"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/storage"
@@ -22,6 +23,7 @@ type NoticeType int
 const (
 	// NoticeRepository type
 	NoticeRepository NoticeType = iota + 1
+
 	// NoticeTask type
 	NoticeTask
 )
@@ -56,8 +58,9 @@ func CreateNotice(ctx context.Context, tp NoticeType, desc string, args ...any) 
 }
 
 // CreateRepositoryNotice creates new system notice with type NoticeRepository.
-func CreateRepositoryNotice(desc string, args ...any) error {
-	return CreateNotice(graceful.GetManager().ShutdownContext(), NoticeRepository, desc, args...)
+func CreateRepositoryNotice(repoFullName string, desc string, args ...any) error {
+	repoDesc := fmt.Sprintf("(%s) %s", repoFullName)
+	return CreateNotice(graceful.GetManager().ShutdownContext(), NoticeRepository, repoDesc, args...)
 }
 
 // RemoveAllWithNotice removes all directories in given path and

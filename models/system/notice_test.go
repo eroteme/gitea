@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"code.gitea.io/gitea/models/db"
+
 	"code.gitea.io/gitea/models/system"
 	"code.gitea.io/gitea/models/unittest"
 
@@ -41,7 +42,8 @@ func TestCreateRepositoryNotice(t *testing.T) {
 		Description: "test description",
 	}
 	unittest.AssertNotExistsBean(t, noticeBean)
-	assert.NoError(t, system.CreateRepositoryNotice(noticeBean.Description))
+
+	assert.NoError(t, system.CreateRepositoryNotice("noone/test", noticeBean.Description))
 	unittest.AssertExistsAndLoadBean(t, noticeBean)
 }
 
