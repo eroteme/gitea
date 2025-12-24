@@ -59,7 +59,7 @@ func CreateNotice(ctx context.Context, tp NoticeType, desc string, args ...any) 
 
 // CreateRepositoryNotice creates new system notice with type NoticeRepository.
 func CreateRepositoryNotice(repoFullName string, desc string, args ...any) error {
-	repoDesc := fmt.Sprintf("(%s) %s", repoFullName)
+	repoDesc := fmt.Sprintf("(%s) %s", repoFullName, desc)
 	return CreateNotice(graceful.GetManager().ShutdownContext(), NoticeRepository, repoDesc, args...)
 }
 
